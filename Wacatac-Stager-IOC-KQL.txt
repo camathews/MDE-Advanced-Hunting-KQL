@@ -1,0 +1,11 @@
+// Query to search for an observed Wacatac Stager IoC
+
+// wscript.exe used to run JavaScript that downloads a file
+DeviceProcessEvents
+| where InitiatingProcessFileName =~ "wscript.exe"
+| where ProcessCommandLine contains "http" or ProcessCommandLine contains "https"
+| where InitiatingProcessId in (
+(DeviceProcessEvents
+| where FileName =~ "wscript.exe" and ProcessCommandLine contains ".js"
+| project ProcessId)
+)

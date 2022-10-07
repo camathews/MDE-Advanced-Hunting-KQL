@@ -1,0 +1,28 @@
+// Queries to search for Raspberry Robin infection
+
+// nested query that finds the PID of the child process of initial cmd execution and then searches for the spawned msiexec or explorer processes
+DeviceProcessEvents
+    | where FileName in ("explorer.exe", "msiexec.exe")
+    | where InitiatingProcessId in (
+    (DeviceProcessEvents
+        | where InitiatingProcessCommandLine contains "\"cmd.exe\" /R"
+        | where FileName in ("conhost.exe", "cmd.exe")
+        | project ProcessId
+    )
+)
+    | where (FileName =~ "msiexec.exe" and ProcessCommandLine contains "8080" and ProcessCommandLine contains "http") or (FileName =~ "explorer.exe" and (ProcessCommandLine contains "\"removable disk\"" or ProcessCommandLine contains "\"usb drive\"" or ProcessCommandLine contains "lnkfile"))
+    | project Timestamp, DeviceName, FileName, ProcessCommandLine, ProcessId, InitiatingProcessCreationTime, InitiatingProcessFileName, InitiatingProcessCommandLine, InitiatingProcessId
+
+
+// simple query for msiexec.exe and http/https and 8080
+DeviceProcessEvents
+| where FileName =~ "msiexec.exe"
+| where ProcessCommandLine contains "http:" or ProcessCommandLine contains "https:"
+| where ProcessCommandLine contains "8080"
+    | project Timestamp, DeviceName, FileName, ProcessCommandLine, ProcessId, InitiatingProcessCreationTime, InitiatingProcessFileName, InitiatingProcessCommandLine, InitiatingProcessId
+
+
+// simple query for explorer.exe and IOC strings
+DeviceProcessEvents
+| where FileName =~ "explorer.exe"
+| where ProcessCommandLine contains "\"removable disk\"" or ProcessCommandLine contains "\"usb drive\"" or ProcessCommandLine contains "lnkfile"

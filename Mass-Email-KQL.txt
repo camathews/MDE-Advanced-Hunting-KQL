@@ -1,0 +1,11 @@
+// Query to search for email accounts sending more than 1000 emails in a 2 hour time span.
+
+// Potentially Compromised Account Sending Mass Emails
+EmailEvents
+| where Timestamp > ago(2hr)
+| where SenderFromAddress contains "@example.com"
+| summarize (Timestamp, ReportId)=arg_max(Timestamp, ReportId), Total = count() by SenderFromAddress, SenderObjectId
+| where Total > 1000
+| extend Timestamp = now()
+| extend AccountObjectId = SenderObjectId
+| project Timestamp, SenderFromAddress, AccountObjectId, Total, ReportId
